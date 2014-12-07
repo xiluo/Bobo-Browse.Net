@@ -276,7 +276,7 @@
                 }
                 else
                 {
-                    base.Add(Lucene.Net.Util.NumericUtils.PrefixCodedToDouble(o).ToString());
+                    base.Add(Lucene.Net.Util.NumericUtils.PrefixCodedToDouble(o).ToString("00.00"));
                 }
             }
         }
