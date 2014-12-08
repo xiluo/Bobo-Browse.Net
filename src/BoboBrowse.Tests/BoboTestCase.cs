@@ -78,12 +78,6 @@ namespace BoboBrowse.Net
             }
         }
 
-        //public BoboTestCase()
-        //{
-        //    this.fconf = BuildFieldConf();
-        //    this.indexDir = CreateIndex();
-        //}
-
         [SetUp]
         public void Init()
         {
@@ -102,17 +96,7 @@ namespace BoboBrowse.Net
         private BoboIndexReader NewIndexReader(bool readOnly)
         {
             IndexReader srcReader = IndexReader.Open(indexDir, readOnly);
-            try
-            {
-                return BoboIndexReader.GetInstance(srcReader, this.fconf);
-            }
-            finally
-            {
-                if (srcReader != null)
-                {
-                    srcReader.Close();
-                }
-            }
+            return BoboIndexReader.GetInstance(srcReader, this.fconf);
         }
 
         private BoboBrowser NewBrowser(bool readOnly)
@@ -759,9 +743,16 @@ namespace BoboBrowse.Net
             {
                 if (boboBrowser == null)
                 {
-                    boboBrowser = NewBrowser(readOnly: true);
+                    using (boboBrowser = NewBrowser(readOnly: true))
+                    {
+                        result = boboBrowser.Browse(req);
+                    }
                 }
-                result = boboBrowser.Browse(req);
+                else
+                {
+                    result = boboBrowser.Browse(req);
+                }
+                
                 DoTest(result, req, numHits, choiceMap, ids);
                 return result;
             }
@@ -772,20 +763,6 @@ namespace BoboBrowse.Net
             catch (System.IO.IOException ioe)
             {
                 Assert.Fail(ioe.Message);
-            }
-            finally
-            {
-                if (boboBrowser != null)
-                {
-                    try
-                    {
-                        boboBrowser.Close();
-                    }
-                    catch (System.IO.IOException e)
-                    {
-                        Assert.Fail(e.Message);
-                    }
-                }
             }
             return null;
         }
@@ -1036,14 +1013,15 @@ namespace BoboBrowse.Net
             br.Offset = 0;
             br.SetFacetSpec("number", new FacetSpec());
 
-            BoboBrowser browser = NewBrowser(readOnly: true);
+            using (BoboBrowser browser = NewBrowser(readOnly: true))
+            {
+                BrowseResult res = browser.Browse(br);
+                IFacetAccessible facetAccessor = res.GetFacetAccessor("number");
+                BrowseFacet facet = facetAccessor.GetFacet("5");
 
-            BrowseResult res = browser.Browse(br);
-            IFacetAccessible facetAccessor = res.GetFacetAccessor("number");
-            BrowseFacet facet = facetAccessor.GetFacet("5");
-
-            Assert.AreEqual(facet.Value, "0005");
-            Assert.AreEqual(facet.HitCount, 1);
+                Assert.AreEqual(facet.Value, "0005");
+                Assert.AreEqual(facet.HitCount, 1);
+            }
         }
 
         [Test]
@@ -1221,7 +1199,7 @@ namespace BoboBrowse.Net
         [Test]
         public void TestBrowseWithDeletes()
         {
-            BoboIndexReader reader = null;
+            //BoboIndexReader reader = null;
 
             BrowseRequest br = new BrowseRequest();
             br.Count = 10;
@@ -1238,38 +1216,26 @@ namespace BoboBrowse.Net
 
             try
             {
-                reader = NewIndexReader(false);
-                reader.DeleteDocuments(new Term("id", "1"));
-                reader.DeleteDocuments(new Term("id", "2"));
+                using (var reader = NewIndexReader(false))
+                {
+                    reader.DeleteDocuments(new Term("id", "1"));
+                    reader.DeleteDocuments(new Term("id", "2"));
 
-                br = new BrowseRequest();
-                br.Count = 10;
-                br.Offset = 0;
+                    br = new BrowseRequest();
+                    br.Count = 10;
+                    br.Offset = 0;
 
-                sel = new BrowseSelection("color");
-                sel.AddValue("red");
-                br.AddSelection(sel);
-                answer = new Dictionary<string, IEnumerable<BrowseFacet>>();
+                    sel = new BrowseSelection("color");
+                    sel.AddValue("red");
+                    br.AddSelection(sel);
+                    answer = new Dictionary<string, IEnumerable<BrowseFacet>>();
 
-                DoTest(new BoboBrowser(reader), br, 1, answer, null);
+                    DoTest(new BoboBrowser(reader), br, 1, answer, null);
+                }
             }
             catch (System.IO.IOException ioe)
             {
                 Assert.Fail(ioe.Message);
-            }
-            finally
-            {
-                if (reader != null)
-                {
-                    try
-                    {
-                        reader.Close();
-                    }
-                    catch (System.IO.IOException e)
-                    {
-                        Assert.Fail(e.Message);
-                    }
-                }
             }
 
             br = new BrowseRequest();
@@ -1487,26 +1453,28 @@ namespace BoboBrowse.Net
             dateSpec.ExpandSelection = true;
             browseRequest.SetFacetSpec("date", dateSpec);
 
-            BoboBrowser boboBrowser = NewBrowser(readOnly: true);
-
-            browseRequest.Sort = new SortField[] { new SortField("compactnum", SortField.STRING, true) };
-
-            MultiBoboBrowser multiBoboBrowser = new MultiBoboBrowser(new IBrowsable[] { boboBrowser, boboBrowser });
-            BrowseResult mergedResult = multiBoboBrowser.Browse(browseRequest);
-
-            var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            using (BoboBrowser boboBrowser = NewBrowser(readOnly: true))
             {
-                { "color", new BrowseFacet[] {  new BrowseFacet("red", 4), new BrowseFacet("green", 2) } },
-                { "tag", new BrowseFacet[] { new BrowseFacet("animal", 2), new BrowseFacet("dog", 2), new BrowseFacet("humane", 2), new BrowseFacet("pet", 2), new BrowseFacet("rabbit", 4) } },
-                { "shape", new BrowseFacet[] {  new BrowseFacet("square", 4) } },
-                { "date", new BrowseFacet[] { new BrowseFacet("[2000/01/01 TO 2003/05/05]", 2) } }              
-            };
 
-            DoTest(mergedResult, browseRequest, 4, answer, new String[] { "7", "7", "1", "1" });
+                browseRequest.Sort = new SortField[] { new SortField("compactnum", SortField.STRING, true) };
 
-            browseRequest.Sort = new SortField[] { new SortField("multinum", SortField.STRING, true) };
-            mergedResult = multiBoboBrowser.Browse(browseRequest);
-            DoTest(mergedResult, browseRequest, 4, answer, new String[] { "7", "7", "1", "1" });
+                MultiBoboBrowser multiBoboBrowser = new MultiBoboBrowser(new IBrowsable[] { boboBrowser, boboBrowser });
+                BrowseResult mergedResult = multiBoboBrowser.Browse(browseRequest);
+
+                var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+                {
+                    { "color", new BrowseFacet[] {  new BrowseFacet("red", 4), new BrowseFacet("green", 2) } },
+                    { "tag", new BrowseFacet[] { new BrowseFacet("animal", 2), new BrowseFacet("dog", 2), new BrowseFacet("humane", 2), new BrowseFacet("pet", 2), new BrowseFacet("rabbit", 4) } },
+                    { "shape", new BrowseFacet[] {  new BrowseFacet("square", 4) } },
+                    { "date", new BrowseFacet[] { new BrowseFacet("[2000/01/01 TO 2003/05/05]", 2) } }              
+                };
+
+                DoTest(mergedResult, browseRequest, 4, answer, new String[] { "7", "7", "1", "1" });
+
+                browseRequest.Sort = new SortField[] { new SortField("multinum", SortField.STRING, true) };
+                mergedResult = multiBoboBrowser.Browse(browseRequest);
+                DoTest(mergedResult, browseRequest, 4, answer, new String[] { "7", "7", "1", "1" });
+            }
         }
 
         [Test]
@@ -1536,33 +1504,37 @@ namespace BoboBrowse.Net
 
             DoTest(br, 5, null, new String[] { "1", "2", "7", "4", "5" });
 
-            BoboBrowser b = NewBrowser(readOnly: true);
-		    Explanation expl = b.Explain(colorQ, 0);
-            Console.WriteLine(expl.ToString());
-		
-		    br.Query = tagQ;
-		    DoTest(br,4,null,new String[]{"7","1","3","2"});
-		    expl = b.Explain(tagQ, 6);
-            Console.WriteLine(expl.ToString());
+            using (BoboBrowser b = NewBrowser(readOnly: true))
+            {
+                Explanation expl = b.Explain(colorQ, 0);
+                Console.WriteLine(expl.ToString());
+
+                br.Query = tagQ;
+                DoTest(br, 4, null, new String[] { "7", "1", "3", "2" });
+                expl = b.Explain(tagQ, 6);
+                Console.WriteLine(expl.ToString());
+            }
         }
 
         [Test]
         public void TestRuntimeFilteredDateRange()
         {
-            BoboBrowser browser = NewBrowser(readOnly: true);
-            String[] ranges = new String[] { "[2001/01/01 TO 2001/12/30]", "[2007/01/01 TO 2007/12/30]" };
-            FilteredRangeFacetHandler handler = new FilteredRangeFacetHandler("filtered_date", "date", ranges);
-            browser.SetFacetHandler(handler);
-
-            BrowseRequest req = new BrowseRequest();
-            req.SetFacetSpec("filtered_date", new FacetSpec());
-
-            var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            using (BoboBrowser browser = NewBrowser(readOnly: true))
             {
-                { "filtered_date", new BrowseFacet[] { new BrowseFacet("[2001/01/01 TO 2001/12/30]", 1), new BrowseFacet("[2007/01/01 TO 2007/12/30]", 1) } }          
-            };
+                String[] ranges = new String[] { "[2001/01/01 TO 2001/12/30]", "[2007/01/01 TO 2007/12/30]" };
+                FilteredRangeFacetHandler handler = new FilteredRangeFacetHandler("filtered_date", "date", ranges);
+                browser.SetFacetHandler(handler);
 
-            DoTest(browser, req, 7, answer, null);
+                BrowseRequest req = new BrowseRequest();
+                req.SetFacetSpec("filtered_date", new FacetSpec());
+
+                var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+                {
+                    { "filtered_date", new BrowseFacet[] { new BrowseFacet("[2001/01/01 TO 2001/12/30]", 1), new BrowseFacet("[2007/01/01 TO 2007/12/30]", 1) } }          
+                };
+
+                DoTest(browser, req, 7, answer, null);
+            }
         }
 
         [Test]
