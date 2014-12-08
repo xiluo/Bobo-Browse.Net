@@ -444,10 +444,9 @@ namespace BoboBrowse.Net
 		    facetHandlers.Add(new MultiValueFacetHandler("multinum", new PredefinedTermListFactory<int>("000")));
 		    facetHandlers.Add(new CompactMultiValueFacetHandler("compactnum", new PredefinedTermListFactory<int>("000")));
 		    facetHandlers.Add(new SimpleFacetHandler("storenum", new PredefinedTermListFactory<long>(null)));
-		
 
-            // TODO: Test the SimpleGroupbyFacetHandler
-            //HashSet<String> dependsNames=new HashSet<String>();
+
+            //HashSet<String> dependsNames = new HashSet<String>();
             //dependsNames.Add("color");
             //dependsNames.Add("shape");
             //dependsNames.Add("number");
@@ -911,11 +910,100 @@ namespace BoboBrowse.Net
             DoTest(br, 3, null, new String[] { "7", "1", "5" });
         }
 
+        // Used by TestCustomSort
+        // From BoboBrowse 2.0.7
+        //private class CustomSortComparatorSource : SortComparatorSource
+        //{
+
+        //    public ScoreDocComparator NewComparator(IndexReader reader, string fld) 
+        //    {
+        //        return new CustomSortDocComparator();
+        //    }
+			
+        //    public class CustomSortDocComparator : ScoreDocComparator
+        //    {
+
+        //        public int Compare(ScoreDoc doc1, ScoreDoc doc2) 
+        //        {
+        //            int id1 = Math.Abs(doc1.Doc - 4);
+        //            int id2 = Math.Abs(doc2.Doc - 4);
+        //            int val = id1 - id2;
+        //            if (val==0)
+        //            {
+        //                return doc1.Doc - doc2.Doc;
+        //            }
+        //            return val;
+        //        }
+
+        //        public int sortType() {
+        //            return SortField.CUSTOM;
+        //        }
+
+        //        public Comparable sortValue(ScoreDoc doc) {
+        //            return new Integer(Math.abs(doc.doc-4));
+        //        }
+				
+        //    }
+        //}
+
+        private class CustomSortComparatorSource : FieldComparatorSource
+        {
+            public override FieldComparator NewComparator(string fieldname, int numHits, int sortPos, bool reversed)
+            {
+                return new CustomSortDocComparator();
+            }
+
+            public class CustomSortDocComparator : FieldComparator
+            {
+                public override int Compare(int slot1, int slot2)
+                {
+                    int id1 = Math.Abs(slot1 - 4);
+                    int id2 = Math.Abs(slot2 - 4);
+                    int val = id1 - id2;
+                    if (val == 0)
+                    {
+                        return slot1 - slot2;
+                    }
+                    return val;
+                }
+
+                public override int CompareBottom(int doc)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override void Copy(int slot, int doc)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override void SetBottom(int slot)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override void SetNextReader(IndexReader reader, int docBase)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override IComparable this[int slot]
+                {
+                    get { throw new NotImplementedException(); }
+                }
+            }
+        }
+
         [Test]
         public void TestCustomSort()
         {
-            Assert.Fail("Not Implemented");
-            // TODO: Implement
+            // no sel
+            BrowseRequest br = new BrowseRequest();
+            br.Count = 10;
+            br.Offset = 0;
+
+            br.Sort = new SortField[] { new SortField("custom", new CustomSortComparatorSource()) };
+            DoTest(br, 7, null, new String[] { "5", "4", "6", "3", "7", "2", "1" });
         }
 
         [Test]
@@ -1557,11 +1645,48 @@ namespace BoboBrowse.Net
             }
         }
 
-        [Test]
-        public void TestSimpleGroupByFacetHandler()
-        {
-            Assert.Fail("Not Implemented");
-            // TODO: Implement
-        }
+        //[Test]
+        //public void TestSimpleGroupByFacetHandler()
+        //{
+        //    BrowseRequest req = new BrowseRequest();
+        //    FacetSpec fspec = new FacetSpec();
+        //    req.SetFacetSpec("groupby", fspec);
+
+        //    var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+        //    {
+        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,rectangle,0011", 1), new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
+        //    };
+
+        //    BrowseSelection sel = new BrowseSelection("groupby");
+        //    sel.AddValue("red");
+        //    req.AddSelection(sel);
+
+        //    DoTest(req, 3, answer, null);
+
+        //    sel.Values = new String[] { "red,square" };
+        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+        //    {
+        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
+        //    };
+
+        //    DoTest(req, 2, answer, null);
+
+        //    sel.Values = new String[] { "red,square,0005" };
+        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+        //    {
+        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1) } }          
+        //    };
+
+        //    DoTest(req, 1, answer, null);
+
+        //    req.RemoveSelection("groupby");
+        //    fspec.MaxCount = 2;
+        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+        //    {
+        //        { "groupby", new BrowseFacet[] { new BrowseFacet("blue,circle,0913", 1), new BrowseFacet("blue,square,1013", 1) } }          
+        //    };
+
+        //    DoTest(req, 7, answer, null);
+        //}
     }
 }

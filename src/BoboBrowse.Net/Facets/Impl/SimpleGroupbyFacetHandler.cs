@@ -1,4 +1,4 @@
-// TODO: Work out how to make this function with Lucene.Net 3.0.3.
+////////TODO: Work out how to make this function with Lucene.Net 3.0.3.
 
 //namespace BoboBrowse.Net.Facets.Impl
 //{
@@ -39,7 +39,7 @@
 //        public override RandomAccessFilter BuildRandomAccessFilter(string @value, Properties selectionProperty)
 //        {
 //            List<RandomAccessFilter> filterList = new List<RandomAccessFilter>();
-//            string[] vals = @value.Split(new string[] {_sep}, StringSplitOptions.RemoveEmptyEntries);
+//            string[] vals = @value.Split(new string[] { _sep }, StringSplitOptions.RemoveEmptyEntries);
 //            for (int i = 0; i < vals.Length; ++i)
 //            {
 //                SimpleFacetHandler handler = _facetHandlers[i];
@@ -93,25 +93,27 @@
 //            return GetFieldValues(id);
 //        }
 
-//        //public override ScoreDocComparator GetScoreDocComparator()
-//        //{
-//        //    List<ScoreDocComparator> comparatorList = new List<ScoreDocComparator>(_fieldsSet.Count);
-//        //    foreach (FacetHandler handler in _facetHandlers)
-//        //    {
-//        //        comparatorList.Add(handler.GetScoreDocComparator());
-//        //    }
-//        //    return new GroupbyScoreDocComparator(comparatorList.ToArray());
-//        //}
-
-//        public override FieldComparator GetComparator(int numDocs, SortField field)
+//        public override ScoreDocComparator GetScoreDocComparator()
 //        {
-//            var comparatorList = new List<FieldComparator>(_fieldsSet.Count);
-//            foreach (var handler in _facetHandlers)
+//            List<ScoreDocComparator> comparatorList = new List<ScoreDocComparator>(_fieldsSet.Count);
+//            foreach (FacetHandler handler in _facetHandlers)
 //            {
-//                comparatorList.Add(handler.GetComparator(numDocs, field));
+//                comparatorList.Add(handler.GetScoreDocComparator());
 //            }
-//            return new GroupbyScoreDocComparator(
+//            return new GroupbyScoreDocComparator(comparatorList.ToArray());
 //        }
+
+//        // NightOwl888: I attempted to implement this method (and replace the GetScoreDocComparator() method above),
+//        // but wasn't able to complete the implementation
+//        //public override FieldComparator GetComparator(int numDocs, SortField field)
+//        //{
+//        //    var comparatorList = new List<FieldComparator>(_fieldsSet.Count);
+//        //    foreach (var handler in _facetHandlers)
+//        //    {
+//        //        comparatorList.Add(handler.GetComparator(numDocs, field));
+//        //    }
+//        //    return new GroupbyScoreDocComparator(
+//        //}
 
 //        public override void Load(BoboIndexReader reader)
 //        {
@@ -136,93 +138,24 @@
 //            return new SimpleGroupbyFacetHandler(Name, _fieldsSet);
 //        }
 
-//        private class GroupByFieldComparator : FieldComparator
-//        {
-//            private FieldComparator[] _comparators;
-
-//            public GroupByFieldComparator(FieldComparator[] comparators)
-//            {
-//                _comparators = comparators;
-//            }
-
-//            public override int Compare(int slot1, int slot2)
-//            {
-//                int retval = 0;
-//                foreach (var comparator in _comparators)
-//                {
-//                    retval = comparator.Compare(slot1, slot2);
-//                    if (retval != 0)
-//                        break;
-//                }
-//                return retval;
-//            }
-
-//            public int SortType()
-//            {
-//                return SortField.CUSTOM;
-//            }
-
-//            private class GroupbyScoreFieldComparatorComparable : IComparable
-//            {
-//                private ScoreDoc doc;
-//                private GroupByFieldComparator parent;
-
-//                public GroupbyScoreFieldComparatorComparable(GroupByFieldComparator parent, ScoreDoc doc)
-//                {
-//                    this.parent = parent;
-//                    this.doc = doc;
-//                }
-
-                
-
-//                public int CompareTo(object obj)
-//                {
-//                    int retval = 0;
-//                    foreach (var comparator in parent._comparators)
-//                    {
-//                        retval = comparator.SortValue(doc).CompareTo(obj);
-
-//                        if (retval != 0)
-//                            break;
-//                    }
-//                    return retval;
-//                }
-
-//                //public int CompareTo(ScoreDoc other)
-//                //{
-//                //    int retval = 0;
-//                //    foreach (var comparator in parent._comparators)
-//                //    {
-//                //        //retval = comparator.SortValue(doc).CompareTo(obj);
-//                //        retval = 
-//                //        if (retval != 0)
-//                //            break;
-//                //    }
-//                //    return retval
-//                //}
-//            }
-
-//            public IComparable SortValue(ScoreDoc doc)
-//            {
-//                return new GroupbyScoreFieldComparatorComparable(this, doc);
-//            }
-//        }
-
-//        //private class GroupbyScoreDocComparator : ScoreDocComparator
+//        // NightOwl888: This was the class I was attempting to return in the 
+//        // GetComparator() method above, but was unable to work out how to 
+//        // make it work like the GroupbyScoreDocComparator class below.
+//        //private class GroupByFieldComparator : FieldComparator
 //        //{
-//        //    private ScoreDocComparator[] _comparators;
+//        //    private FieldComparator[] _comparators;
 
-//        //    public GroupbyScoreDocComparator(ScoreDocComparator[] comparators)
+//        //    public GroupByFieldComparator(FieldComparator[] comparators)
 //        //    {
 //        //        _comparators = comparators;
 //        //    }
 
-//        //    public int Compare(ScoreDoc d1, ScoreDoc d2)
+//        //    public override int Compare(int slot1, int slot2)
 //        //    {
 //        //        int retval = 0;
-//        //        foreach (ScoreDocComparator comparator in _comparators)
+//        //        foreach (var comparator in _comparators)
 //        //        {
-//        //            retval = comparator.Compare(d1, d2);
+//        //            retval = comparator.Compare(slot1, slot2);
 //        //            if (retval != 0)
 //        //                break;
 //        //        }
@@ -234,35 +167,92 @@
 //        //        return SortField.CUSTOM;
 //        //    }
 
-//        //    private class GroupbyScoreDocComparatorComparable : IComparable
+//        //    private class GroupbyScoreFieldComparatorComparable : IComparable
 //        //    {
 //        //        private ScoreDoc doc;
-//        //        private GroupbyScoreDocComparator parent;
+//        //        private GroupByFieldComparator parent;
 
-//        //        public GroupbyScoreDocComparatorComparable(GroupbyScoreDocComparator parent, ScoreDoc doc)
+//        //        public GroupbyScoreFieldComparatorComparable(GroupByFieldComparator parent, ScoreDoc doc)
 //        //        {
 //        //            this.parent = parent;
+//        //            this.doc = doc;
 //        //        }
 
 //        //        public int CompareTo(object obj)
 //        //        {
 //        //            int retval = 0;
-//        //            foreach (ScoreDocComparator comparator in parent._comparators)
+//        //            foreach (var comparator in parent._comparators)
 //        //            {
 //        //                retval = comparator.SortValue(doc).CompareTo(obj);
 //        //                if (retval != 0)
 //        //                    break;
 //        //            }
 //        //            return retval;
-//        //        }
+//        //        }               
 //        //    }
-
 
 //        //    public IComparable SortValue(ScoreDoc doc)
 //        //    {
-//        //        return new GroupbyScoreDocComparatorComparable(this, doc);
+//        //        return new GroupbyScoreFieldComparatorComparable(this, doc);
 //        //    }
 //        //}
+
+
+//        private class GroupbyScoreDocComparator : ScoreDocComparator
+//        {
+//            private ScoreDocComparator[] _comparators;
+
+//            public GroupbyScoreDocComparator(ScoreDocComparator[] comparators)
+//            {
+//                _comparators = comparators;
+//            }
+
+//            public int Compare(ScoreDoc d1, ScoreDoc d2)
+//            {
+//                int retval = 0;
+//                foreach (ScoreDocComparator comparator in _comparators)
+//                {
+//                    retval = comparator.Compare(d1, d2);
+//                    if (retval != 0)
+//                        break;
+//                }
+//                return retval;
+//            }
+
+//            public int SortType()
+//            {
+//                return SortField.CUSTOM;
+//            }
+
+//            private class GroupbyScoreDocComparatorComparable : IComparable
+//            {
+//                private ScoreDoc doc;
+//                private GroupbyScoreDocComparator parent;
+
+//                public GroupbyScoreDocComparatorComparable(GroupbyScoreDocComparator parent, ScoreDoc doc)
+//                {
+//                    this.parent = parent;
+//                }
+
+//                public int CompareTo(object obj)
+//                {
+//                    int retval = 0;
+//                    foreach (ScoreDocComparator comparator in parent._comparators)
+//                    {
+//                        retval = comparator.SortValue(doc).CompareTo(obj);
+//                        if (retval != 0)
+//                            break;
+//                    }
+//                    return retval;
+//                }
+//            }
+
+
+//            public IComparable SortValue(ScoreDoc doc)
+//            {
+//                return new GroupbyScoreDocComparatorComparable(this, doc);
+//            }
+//        }
 
 //        private class GroupbyFacetCountCollector : IFacetCountCollector
 //        {
@@ -327,7 +317,7 @@
 
 //            public virtual BrowseFacet GetFacet(string @value)
 //            {
-//                string[] vals = @value.Split(new string[] {_sep}, StringSplitOptions.RemoveEmptyEntries);
+//                string[] vals = @value.Split(new string[] { _sep }, StringSplitOptions.RemoveEmptyEntries);
 //                if (vals.Length == 0)
 //                    return null;
 //                StringBuilder buf = new StringBuilder();
@@ -473,7 +463,7 @@
 //                            }
 //                        }
 
-//                        while (!pq.IsEmpty) 
+//                        while (!pq.IsEmpty)
 //                        {
 //                            int val = pq.DeleteMax();
 //                            BrowseFacet facet = new BrowseFacet(getFacetString(val), _count[val]);
