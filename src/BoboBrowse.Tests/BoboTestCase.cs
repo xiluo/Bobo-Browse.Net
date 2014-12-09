@@ -430,11 +430,11 @@ namespace BoboBrowse.Net
 		    facetHandlers.Add(new SimpleFacetHandler("storenum", new PredefinedTermListFactory<long>(null)));
 
 
-            //HashSet<String> dependsNames = new HashSet<String>();
-            //dependsNames.Add("color");
-            //dependsNames.Add("shape");
-            //dependsNames.Add("number");
-            //facetHandlers.Add(new SimpleGroupbyFacetHandler("groupby", dependsNames));
+            HashSet<String> dependsNames = new HashSet<String>();
+            dependsNames.Add("color");
+            dependsNames.Add("shape");
+            dependsNames.Add("number");
+            facetHandlers.Add(new SimpleGroupbyFacetHandler("groupby", dependsNames));
 	    		
 		    return facetHandlers;
         }
@@ -1617,48 +1617,48 @@ namespace BoboBrowse.Net
             }
         }
 
-        //[Test]
-        //public void TestSimpleGroupByFacetHandler()
-        //{
-        //    BrowseRequest req = new BrowseRequest();
-        //    FacetSpec fspec = new FacetSpec();
-        //    req.SetFacetSpec("groupby", fspec);
+        [Test]
+        public void TestSimpleGroupByFacetHandler()
+        {
+            BrowseRequest req = new BrowseRequest();
+            FacetSpec fspec = new FacetSpec();
+            req.SetFacetSpec("groupby", fspec);
 
-        //    var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
-        //    {
-        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,rectangle,0011", 1), new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
-        //    };
+            var answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            {
+                { "groupby", new BrowseFacet[] { new BrowseFacet("red,rectangle,0011", 1), new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
+            };
 
-        //    BrowseSelection sel = new BrowseSelection("groupby");
-        //    sel.AddValue("red");
-        //    req.AddSelection(sel);
+            BrowseSelection sel = new BrowseSelection("groupby");
+            sel.AddValue("red");
+            req.AddSelection(sel);
 
-        //    DoTest(req, 3, answer, null);
+            DoTest(req, 3, answer, null);
 
-        //    sel.Values = new String[] { "red,square" };
-        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
-        //    {
-        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
-        //    };
+            sel.Values = new String[] { "red,square" };
+            answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            {
+                { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1), new BrowseFacet("red,square,0010", 1) } }          
+            };
 
-        //    DoTest(req, 2, answer, null);
+            DoTest(req, 2, answer, null);
 
-        //    sel.Values = new String[] { "red,square,0005" };
-        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
-        //    {
-        //        { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1) } }          
-        //    };
+            sel.Values = new String[] { "red,square,0005" };
+            answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            {
+                { "groupby", new BrowseFacet[] { new BrowseFacet("red,square,0005", 1) } }          
+            };
 
-        //    DoTest(req, 1, answer, null);
+            DoTest(req, 1, answer, null);
 
-        //    req.RemoveSelection("groupby");
-        //    fspec.MaxCount = 2;
-        //    answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
-        //    {
-        //        { "groupby", new BrowseFacet[] { new BrowseFacet("blue,circle,0913", 1), new BrowseFacet("blue,square,1013", 1) } }          
-        //    };
+            req.RemoveSelection("groupby");
+            fspec.MaxCount = 2;
+            answer = new Dictionary<string, IEnumerable<BrowseFacet>>()
+            {
+                { "groupby", new BrowseFacet[] { new BrowseFacet("blue,circle,0913", 1), new BrowseFacet("blue,square,1013", 1) } }          
+            };
 
-        //    DoTest(req, 7, answer, null);
-        //}
+            DoTest(req, 7, answer, null);
+        }
     }
 }

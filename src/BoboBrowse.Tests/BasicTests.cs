@@ -255,6 +255,42 @@
                 Console.WriteLine("");
             }
         }
+
+        [Test]
+        public void TestSimpleGroupbyFacetHandler()
+        {
+            var query = new MatchAllDocsQuery();
+            Console.WriteLine(string.Format("query: <{0}>", query.ToString()));
+            var request = new BrowseRequest()
+            {
+                Count = 10,
+                Offset = 0,
+                Query = query                
+            };
+
+            var sectionFilter = new BrowseSelection("year");
+            sectionFilter.Values = new string[] { "2014" };
+            request.AddSelection(sectionFilter);
+
+            var faceHandlers = new List<FacetHandler>();
+
+            faceHandlers.Add(new SimpleFacetHandler("year"));
+            faceHandlers.Add(new SimpleFacetHandler("category"));
+            
+            faceHandlers.Add(new SimpleGroupbyFacetHandler("groupby", new string[] { "year", "category" }));          
+            var browser = new BoboBrowser(BoboIndexReader.GetInstance(IndexReader.Open(_indexDir, true), faceHandlers));
+            var factSpec = new FacetSpec() { OrderBy = FacetSpec.FacetSortSpec.OrderHitsDesc, MinHitCount = 1 };
+            request.SetFacetSpec("groupby", factSpec);
+
+            var result = browser.Browse(request);
+            Console.WriteLine(string.Format("total hits:{0}", result.NumHits));
+            Console.WriteLine("order by year,category");
+            Console.WriteLine("===========================");
+            foreach (var facet in result.FacetMap["groupby"].GetFacets())
+            {
+                Console.WriteLine(facet);
+            }            
+        }
     }
 
     public class NumberFieldFactory : TermListFactory
