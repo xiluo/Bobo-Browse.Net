@@ -4,8 +4,7 @@ namespace BoboBrowse.Net.Facets.Impl
 {
     using BoboBrowse.Net;
     using BoboBrowse.Net.Facets.Filter;
-    using BoboBrowse.Net.Util;
-    using C5;
+    using BoboBrowse.Net.Util;   
     using Lucene.Net.Search;
     using System;
     using System.Collections.Generic;
@@ -13,9 +12,9 @@ namespace BoboBrowse.Net.Facets.Impl
 
     public class SimpleGroupbyFacetHandler : FacetHandler, IFacetHandlerFactory
     {
-        private readonly C5.HashedLinkedList<string> _fieldsSet;
-        private List<SimpleFacetHandler> _facetHandlers;
-        private Dictionary<string, SimpleFacetHandler> _facetHandlerMap;
+        private readonly HashSet<string> _fieldsSet;
+        private IList<FacetHandler> _facetHandlers;
+        private IDictionary<string, FacetHandler> _facetHandlerMap;
 
         private const string SEP = ",";
         private int _maxdoc;
@@ -24,8 +23,7 @@ namespace BoboBrowse.Net.Facets.Impl
         public SimpleGroupbyFacetHandler(string name, IEnumerable<string> dependsOn, string separator)
             : base(name, dependsOn)
         {
-            _fieldsSet = new HashedLinkedList<string>();
-            _fieldsSet.AddAll(dependsOn);
+            _fieldsSet = new HashSet<string>(dependsOn);            
             _facetHandlers = null;
             _facetHandlerMap = null;
             _maxdoc = 0;
@@ -43,7 +41,7 @@ namespace BoboBrowse.Net.Facets.Impl
             string[] vals = @value.Split(new string[] { _sep }, StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < vals.Length; ++i)
             {
-                SimpleFacetHandler handler = _facetHandlers[i];
+                FacetHandler handler = _facetHandlers[i];
                 BrowseSelection sel = new BrowseSelection(handler.Name);
                 sel.AddValue(vals[i]);
                 filterList.Add(handler.BuildFilter(sel));
@@ -53,7 +51,7 @@ namespace BoboBrowse.Net.Facets.Impl
 
         public override IFacetCountCollector GetFacetCountCollector(BrowseSelection sel, FacetSpec fspec)
         {
-            List<DefaultFacetCountCollector> collectorList = new List<DefaultFacetCountCollector>(_facetHandlers.Count);
+            var collectorList = new List<DefaultFacetCountCollector>(_facetHandlers.Count);
             foreach (SimpleFacetHandler facetHandler in _facetHandlers)
             {
                 collectorList.Add((DefaultFacetCountCollector)facetHandler.GetFacetCountCollector(sel, fspec));
@@ -93,33 +91,21 @@ namespace BoboBrowse.Net.Facets.Impl
         {
             return GetFieldValues(id);
         }
-
-        public override ScoreDocComparator GetScoreDocComparator()
+       
+        public override FieldComparator GetComparator(int numDocs, SortField field)
         {
-            List<ScoreDocComparator> comparatorList = new List<ScoreDocComparator>(_fieldsSet.Count);
-            foreach (FacetHandler handler in _facetHandlers)
+            var comparatorList = new List<FieldComparator>(_fieldsSet.Count);
+            foreach (var handler in _facetHandlers)
             {
-                comparatorList.Add(handler.GetScoreDocComparator());
+                comparatorList.Add(handler.GetComparator(numDocs, field));
             }
-            return new GroupbyScoreDocComparator(comparatorList.ToArray());
+            return new GroupbyFacetFieldComparator(numDocs, comparatorList);
         }
-
-        // NightOwl888: I attempted to implement this method (and replace the GetScoreDocComparator() method above),
-        // but wasn't able to complete the implementation
-        //public override FieldComparator GetComparator(int numDocs, SortField field)
-        //{
-        //    var comparatorList = new List<FieldComparator>(_fieldsSet.Count);
-        //    foreach (var handler in _facetHandlers)
-        //    {
-        //        comparatorList.Add(handler.GetComparator(numDocs, field));
-        //    }
-        //    return new GroupbyScoreDocComparator(
-        //}
 
         public override void Load(BoboIndexReader reader)
         {
-            _facetHandlers = new List<SimpleFacetHandler>(_fieldsSet.Count);
-            _facetHandlerMap = new Dictionary<string, SimpleFacetHandler>(_fieldsSet.Count);
+            _facetHandlers = new List<FacetHandler>(_fieldsSet.Count);
+            _facetHandlerMap = new Dictionary<string, FacetHandler>(_fieldsSet.Count);
             foreach (string name in _fieldsSet)
             {
                 FacetHandler handler = reader.GetFacetHandler(name);
@@ -127,9 +113,8 @@ namespace BoboBrowse.Net.Facets.Impl
                 {
                     throw new InvalidOperationException("only simple facet handlers supported");
                 }
-                SimpleFacetHandler sfh = (SimpleFacetHandler)handler;
-                _facetHandlers.Add(sfh);
-                _facetHandlerMap.Add(name, sfh);
+                _facetHandlers.Add(handler);
+                _facetHandlerMap.Add(name, handler);
             }
             _maxdoc = reader.MaxDoc;
         }
@@ -139,119 +124,75 @@ namespace BoboBrowse.Net.Facets.Impl
             return new SimpleGroupbyFacetHandler(Name, _fieldsSet);
         }
 
-        // NightOwl888: This was the class I was attempting to return in the 
-        // GetComparator() method above, but was unable to work out how to 
-        // make it work like the GroupbyScoreDocComparator class below.
-        //private class GroupByFieldComparator : FieldComparator
-        //{
-        //    private FieldComparator[] _comparators;
-
-        //    public GroupByFieldComparator(FieldComparator[] comparators)
-        //    {
-        //        _comparators = comparators;
-        //    }
-
-        //    public override int Compare(int slot1, int slot2)
-        //    {
-        //        int retval = 0;
-        //        foreach (var comparator in _comparators)
-        //        {
-        //            retval = comparator.Compare(slot1, slot2);
-        //            if (retval != 0)
-        //                break;
-        //        }
-        //        return retval;
-        //    }
-
-        //    public int SortType()
-        //    {
-        //        return SortField.CUSTOM;
-        //    }
-
-        //    private class GroupbyScoreFieldComparatorComparable : IComparable
-        //    {
-        //        private ScoreDoc doc;
-        //        private GroupByFieldComparator parent;
-
-        //        public GroupbyScoreFieldComparatorComparable(GroupByFieldComparator parent, ScoreDoc doc)
-        //        {
-        //            this.parent = parent;
-        //            this.doc = doc;
-        //        }
-
-        //        public int CompareTo(object obj)
-        //        {
-        //            int retval = 0;
-        //            foreach (var comparator in parent._comparators)
-        //            {
-        //                retval = comparator.SortValue(doc).CompareTo(obj);
-        //                if (retval != 0)
-        //                    break;
-        //            }
-        //            return retval;
-        //        }               
-        //    }
-
-        //    public IComparable SortValue(ScoreDoc doc)
-        //    {
-        //        return new GroupbyScoreFieldComparatorComparable(this, doc);
-        //    }
-        //}
-
-
-        private class GroupbyScoreDocComparator : ScoreDocComparator
+        private class GroupbyFacetFieldComparator : FieldComparator
         {
-            private ScoreDocComparator[] _comparators;
+            private int[] _docs;
+            private IList<FieldComparator> _comparatorList;
 
-            public GroupbyScoreDocComparator(ScoreDocComparator[] comparators)
+            public GroupbyFacetFieldComparator(int numHits, IList<FieldComparator> comparatorList)
             {
-                _comparators = comparators;
+                _docs = new int[numHits];
+                _comparatorList = comparatorList;
             }
 
-            public int Compare(ScoreDoc d1, ScoreDoc d2)
+            public override int Compare(int slot1, int slot2)
             {
-                int retval = 0;
-                foreach (ScoreDocComparator comparator in _comparators)
+                foreach (var comparator in _comparatorList)
                 {
-                    retval = comparator.Compare(d1, d2);
-                    if (retval != 0)
-                        break;
-                }
-                return retval;
-            }
-
-            public int SortType()
-            {
-                return SortField.CUSTOM;
-            }
-
-            private class GroupbyScoreDocComparatorComparable : IComparable
-            {
-                private ScoreDoc doc;
-                private GroupbyScoreDocComparator parent;
-
-                public GroupbyScoreDocComparatorComparable(GroupbyScoreDocComparator parent, ScoreDoc doc)
-                {
-                    this.parent = parent;
-                }
-
-                public int CompareTo(object obj)
-                {
-                    int retval = 0;
-                    foreach (ScoreDocComparator comparator in parent._comparators)
+                    var value = comparator.Compare(slot1, slot2);
+                    if (value != 0)
                     {
-                        retval = comparator.SortValue(doc).CompareTo(obj);
-                        if (retval != 0)
-                            break;
+                        return value;
                     }
-                    return retval;
+                }
+                return 0;
+            }
+
+            public override int CompareBottom(int doc)
+            {
+                foreach (var comparator in _comparatorList)
+                {
+                    var value = comparator.CompareBottom(doc);
+                    if (value != 0)
+                    {
+                        return value;
+                    }
+                }
+                return 0;
+            }
+
+            public override void Copy(int slot, int doc)
+            {
+                foreach (var comparator in _comparatorList)
+                {
+                    comparator.Copy(slot, doc);
                 }
             }
 
-
-            public IComparable SortValue(ScoreDoc doc)
+            public override void SetBottom(int slot)
             {
-                return new GroupbyScoreDocComparatorComparable(this, doc);
+                foreach (var comparator in _comparatorList)
+                {
+                    comparator.SetBottom(slot);
+                }
+            }
+
+            public override void SetNextReader(Lucene.Net.Index.IndexReader reader, int docBase)
+            {                
+            }
+
+            public override IComparable this[int slot]
+            {
+                get
+                {
+                    var sb = new StringBuilder();
+                    foreach (var comparator in _comparatorList)
+                    {
+                        sb.Append(comparator[slot]);
+                        sb.Append(",");
+                    }
+                    return sb.ToString();
+                }
             }
         }
 
