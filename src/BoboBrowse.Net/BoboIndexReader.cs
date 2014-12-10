@@ -23,16 +23,17 @@
 
 namespace BoboBrowse.Net
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+    using BoboBrowse.Net.Facets;
+    using BoboBrowse.Net.Query;
+    using BoboBrowse.Net.Search; 
     using Common.Logging;
     using Lucene.Net.Documents;
     using Lucene.Net.Index;
     using Lucene.Net.Search;
-    using BoboBrowse.Net.Facets;
-    using BoboBrowse.Net.Search;  
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
 
     /// <summary>
     /// bobo browse index reader
@@ -44,7 +45,7 @@ namespace BoboBrowse.Net
 
         private static readonly ILog logger = LogManager.GetLogger<BoboIndexReader>();
 
-        private readonly ICollection<FacetHandler> facetHandlers;
+        private readonly IEnumerable<FacetHandler> facetHandlers;
         private readonly WorkArea workArea;
         private C5.TreeSet<int> deletedDocs;
         private volatile int[] deletedDocsArray;
@@ -54,7 +55,7 @@ namespace BoboBrowse.Net
         private bool _deleted;        
 
         #region ctors
-        protected BoboIndexReader(IndexReader reader, ICollection<FacetHandler> facetHandlers, WorkArea workArea)
+        protected BoboIndexReader(IndexReader reader, IEnumerable<FacetHandler> facetHandlers, WorkArea workArea)
             : base(reader)
         {
             this.facetHandlers = facetHandlers ?? new List<FacetHandler>();
@@ -63,12 +64,22 @@ namespace BoboBrowse.Net
         }
         #endregion
 
-        public static BoboIndexReader GetInstance(IndexReader reader, ICollection<FacetHandler> facetHandlers)
+        public static BoboIndexReader GetInstance(IndexReader reader)
+        {
+            return BoboIndexReader.GetInstance(reader, null, new WorkArea());
+        }
+
+        public static BoboIndexReader GetInstance(IndexReader reader, WorkArea workArea)
+        {
+            return BoboIndexReader.GetInstance(reader, null, workArea);
+        }
+
+        public static BoboIndexReader GetInstance(IndexReader reader, IEnumerable<FacetHandler> facetHandlers)
         {
             return BoboIndexReader.GetInstance(reader, facetHandlers, new WorkArea());
         }
 
-        public static BoboIndexReader GetInstance(IndexReader reader,ICollection<FacetHandler> facetHandlers, WorkArea workArea)
+        public static BoboIndexReader GetInstance(IndexReader reader, IEnumerable<FacetHandler> facetHandlers, WorkArea workArea)
         {
             BoboIndexReader boboReader = new BoboIndexReader(reader, facetHandlers, workArea);
             boboReader.FacetInit();
@@ -80,7 +91,7 @@ namespace BoboBrowse.Net
             Initialize(facetHandlers, workArea);
         }
 
-        private void Initialize(ICollection<FacetHandler> facetHandlers, WorkArea workArea)
+        private void Initialize(IEnumerable<FacetHandler> facetHandlers, WorkArea workArea)
         {
             this.facetHandlerMap = new Dictionary<string, FacetHandler>();
             foreach (FacetHandler facetHandler in facetHandlers)
@@ -163,7 +174,7 @@ namespace BoboBrowse.Net
             }
         }
 
-        public virtual Query GetFastMatchAllDocsQuery()
+        public virtual Lucene.Net.Search.Query GetFastMatchAllDocsQuery()
         {
             this.InitDeletedDocumentsIndex();
             int[] deldocs = deletedDocsArray;

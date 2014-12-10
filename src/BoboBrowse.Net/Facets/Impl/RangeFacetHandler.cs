@@ -19,7 +19,7 @@
 //* please go to https://sourceforge.net/projects/bobo-browse/, or 
 //* send mail to owner@browseengine.com. 
 
-namespace BoboBrowse.Net.Facets
+namespace BoboBrowse.Net.Facets.Impl
 {
     using System;    
     using System.Collections.Generic;
@@ -27,7 +27,8 @@ namespace BoboBrowse.Net.Facets
     using System.Text.RegularExpressions;
     using Common.Logging;
     using Lucene.Net.Search;
-    using BoboBrowse.Net.Facets.Filters;
+    using BoboBrowse.Net.Facets.Data;
+    using BoboBrowse.Net.Facets.Filter;
     using BoboBrowse.Net.Search;
 
     public class RangeFacetHandler : FacetHandler, IFacetHandlerFactory
@@ -37,10 +38,10 @@ namespace BoboBrowse.Net.Facets
         private FacetDataCache dataCache;
         private readonly string indexFieldName;
         private readonly TermListFactory termListFactory;
-        private readonly List<string> predefinedRanges;
+        private readonly IEnumerable<string> predefinedRanges;
         private readonly bool autoRange;
 
-        public RangeFacetHandler(string name, string indexFieldName, TermListFactory termListFactory, List<string> predefinedRanges)
+        public RangeFacetHandler(string name, string indexFieldName, TermListFactory termListFactory, IEnumerable<string> predefinedRanges)
             : base(name)
         {
             this.indexFieldName = indexFieldName;
@@ -50,17 +51,17 @@ namespace BoboBrowse.Net.Facets
             this.autoRange = false;
         }
 
-        public RangeFacetHandler(string name, TermListFactory termListFactory, List<string> predefinedRanges)
+        public RangeFacetHandler(string name, TermListFactory termListFactory, IEnumerable<string> predefinedRanges)
             : this(name, name, termListFactory, predefinedRanges)
         {
         }
 
-        public RangeFacetHandler(string name, List<string> predefinedRanges)
+        public RangeFacetHandler(string name, IEnumerable<string> predefinedRanges)
             : this(name, name, null, predefinedRanges)
         {
         }
 
-        public RangeFacetHandler(string name, string indexFieldName, List<string> predefinedRanges)
+        public RangeFacetHandler(string name, string indexFieldName, IEnumerable<string> predefinedRanges)
             : this(name, indexFieldName, null, predefinedRanges)
         {
         }
@@ -273,7 +274,7 @@ namespace BoboBrowse.Net.Facets
             dataCache.Load(indexFieldName, reader, termListFactory);
         }
 
-        public override IFacetAccessible Merge(FacetSpec fspec, List<IFacetAccessible> facetList)
+        public override IFacetAccessible Merge(FacetSpec fspec, IEnumerable<IFacetAccessible> facetList)
         {
             if (autoRange)
             {

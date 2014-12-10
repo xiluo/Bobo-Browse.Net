@@ -21,11 +21,11 @@
 //* please go to https://sourceforge.net/projects/bobo-browse/, or 
 //* send mail to owner@browseengine.com.  
 
-namespace LuceneExt
+namespace LuceneExt.Impl
 {
     using System;
     using Lucene.Net.Util;
-    using LuceneExt.Utils;
+    using LuceneExt.Util;
 
     [Serializable]
     public abstract class AbstractDocSet : DocSet

@@ -19,11 +19,12 @@
 //* please go to https://sourceforge.net/projects/bobo-browse/, or 
 //* send mail to owner@browseengine.com. 
 
-namespace BoboBrowse.Net.Facets
+namespace BoboBrowse.Net.Facets.Impl
 {
     using System;
     using System.Collections.Generic;
-    using BoboBrowse.Net.Utils;
+    using BoboBrowse.Net.Facets.Data;
+    using BoboBrowse.Net.Util;
 
     public abstract class DefaultFacetCountCollector : IFacetCountCollector
     {

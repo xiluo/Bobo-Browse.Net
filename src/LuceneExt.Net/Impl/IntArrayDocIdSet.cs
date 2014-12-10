@@ -22,12 +22,12 @@
 //* please go to https://sourceforge.net/projects/bobo-browse/, or 
 //* send mail to owner@browseengine.com.  
 
-namespace LuceneExt
+namespace LuceneExt.Impl
 {
     using System;
     using System.IO;
     using Lucene.Net.Search;
-    using LuceneExt.Utils;
+    using LuceneExt.Util;
 
     [Serializable]
     public class IntArrayDocIdSet : DocSet
