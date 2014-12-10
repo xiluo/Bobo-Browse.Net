@@ -5,6 +5,18 @@ This Bobo-Browse.Net is build for Lucene.Net 3.x.
 
 if you still use Lucene.Net 2.x,you can see this project BoboBrowse.Net(https://bobo.codeplex.com/).
 
+###Prebuilt FacetHandler types###
+
+**SimpleFacetHandler:** Used when there is a discrete set of facet values, for example: color, with values: red,green,blue,white,black. Each document can have only 1 value in this field. When being indexed, this field should not be tokenized.
+
+**MultiValueFacetHandler:** Similar to simple type field, multi field allows a document to have multiple values. When being indexed, this field can be tokenized. Or alternatively, one can index multiple values in multiple document fields under the same field name.
+
+**PathFacetHandler:** Used to denote facet values with hierarchical structure, for example: "A/B/C/D" Each document can have only 1 value in this field. When being indexed, this field should not be tokenized.
+
+**RangeFacetHandler:** Used to denote a range of facet, e.g. dates, prices etc. Each document can have only 1 value in this field. When being indexed, this field should not be tokenized. Furthermore, the values need to be formatted to ensure sorting by lexical order is the same as the value order.
+
+**SimpleGroupbyFacetHandler:** The facet values order by multi facet handler(SimpleFacetHandler),like SQL group by statement.
+
 ###Building the Source###
 
 Prerequisites:
