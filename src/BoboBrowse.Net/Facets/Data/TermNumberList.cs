@@ -2,7 +2,7 @@ namespace BoboBrowse.Net.Facets.Data
 {
     using System;
 
-	public abstract class TermNumberList : TermValueList<object>
+	public abstract class TermNumberList<T> : TermValueList<T>
 	{
 		protected TermNumberList() : base()
 		{
@@ -44,7 +44,7 @@ namespace BoboBrowse.Net.Facets.Data
 		{
 			if (o == null)
 				return null;
-			if (o.GetType() == typeof(string))
+			if (o is string)
 			{
 				o = this.ParseString((string)o);
 			}

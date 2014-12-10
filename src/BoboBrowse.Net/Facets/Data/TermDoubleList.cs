@@ -5,7 +5,7 @@ namespace BoboBrowse.Net.Facets.Data
     using System.Collections.Generic;
     using System.Globalization;
 
-    public class TermDoubleList : TermNumberList
+    public class TermDoubleList : TermNumberList<double>
     {
         public TermDoubleList()
             : base()
@@ -41,13 +41,13 @@ namespace BoboBrowse.Net.Facets.Data
 
         public override void Add(string @value)
         {
-            Add(Parse(@value));
+            _innerList.Add(Parse(@value));
         }
 
         public override int IndexOf(object o)
         {
             double val = double.Parse((string)o, CultureInfo.InvariantCulture);
-            return this.BinarySearch(val);
+            return _innerList.BinarySearch(val);
         }
 
         protected override object ParseString(string o)

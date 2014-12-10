@@ -24,6 +24,7 @@
 namespace BoboBrowse.Net.Facets.Data
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -47,66 +48,229 @@ namespace BoboBrowse.Net.Facets.Data
     /// <li> <seealso cref="#indexOf(Object)"/> return value conforms to the contract of <seealso cref="Arrays#binarySearch(Object[], Object)"/></li>
     /// <li> <seealso cref="#seal()"/> is introduce to trim the List size, similar to <seealso cref="ArrayList#TrimToSize()"/>, once it is called, no add should be performed.</li>
     /// </u> </summary>
-    public abstract class TermValueList<T>
-        : List<T>
-        , ITermValueList
+    public abstract class TermValueList<T> : ITermValueList, IList<string>
     {
         public abstract string Format(object o);
-        public abstract void Add(string o);
-        public abstract int IndexOf(object o);
-
-        protected internal TermValueList()
+        public virtual void Seal()
         {
+            _innerList.TrimExcess();
         }
 
-        protected internal TermValueList(int capacity)
-            : base(capacity)
+        protected List<T> _innerList;
+
+        protected TermValueList()
         {
+            _innerList = new List<T>();
+        }
+
+        protected TermValueList(int capacity)
+        {
+            _innerList = new List<T>(capacity);
         }
 
         public virtual List<string> GetInnerList()
         {
-            return new List<string>(this.Select(x => Format(x)));
+            return new List<string>(_innerList.Select(x => Format(x)));
+            //return new List<string>(_innerList.Select(x => Convert.ToString(x)));
+        }
+
+        public abstract void Add(string o); // From IList<string>
+
+        //public virtual void Add(int index, String element)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual bool AddAll(IEnumerable<T> c)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual bool AddAll(int index, IEnumerable<T> c)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        public virtual void Clear() // From IList<string>
+        {
+            _innerList.Clear();
         }
 
         public virtual bool Contains(object o)
         {
-            return base.IndexOf((T)o) >= 0;
+            return IndexOf(o) >= 0;
         }
+
+        //public bool ContainsAll(IEnumerable<T> c)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
 
         public virtual string Get(int index)
         {
-            return Format(this[index]);
+            return Format(_innerList[index]);
         }
 
         public virtual object GetRawValue(int index)
         {
-            return this[index];
+            return _innerList[index];
         }
+
+        public abstract int IndexOf(object o);
 
         public virtual bool IsEmpty()
         {
-            return Count == 0;
+            return _innerList.Count == 0;
         }
 
         public virtual int LastIndexOf(object o)
         {
-            return base.IndexOf((T)o); // FIXME
+            return IndexOf(o);
         }
 
-        public virtual int Size()
+        //public virtual ListIterator<string> ListIterator()
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual ListIterator<string> ListIterator(int index)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual bool Remove(Object o)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual string Remove(int index) {
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual bool RemoveAll(IEnumerable<T> c)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual boolean RetainAll(IEnumerable<T> c)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        //public virtual string Set(int index, string element)
+        //{
+        //    throw new NotSupportedException("not supported");
+        //}
+
+        public virtual int Size
         {
-            return Count;
+            get { return this.Count; }
         }
 
-        public virtual List<string> SubList(int fromIndex, int toIndex)
+        //public virtual List<string> SubList(int fromIndex, int toIndex)
+        //{
+        //    throw new InvalidOperationException("not supported");
+        //}
+
+
+
+
+
+        public virtual int IndexOf(string item)// From IList<string>
+        {
+            return this.IndexOf((object)item);
+        }
+
+        public virtual void Insert(int index, string item)// From IList<string>
         {
             throw new InvalidOperationException("not supported");
         }
 
-        public virtual void Seal()
+        public virtual void RemoveAt(int index)// From IList<string>
         {
-            TrimExcess();
+            throw new InvalidOperationException("not supported");
+        }
+
+        public virtual string this[int index]// From IList<string>
+        {
+            get
+            {
+                return Format(_innerList[index]);
+            }
+            set
+            {
+                throw new NotSupportedException("not supported");
+            }
+        }
+
+
+        public virtual bool Contains(string item) // From IList<string>
+        {
+            return this.Contains((object)item);
+        }
+
+        public virtual void CopyTo(string[] array, int arrayIndex)// From IList<string>
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual int Count// From IList<string>
+        {
+            get { return _innerList.Count; }
+        }
+
+        public virtual bool IsReadOnly// From IList<string>
+        {
+            get { return false; }
+        }
+
+        public virtual bool Remove(string item)// From IList<string>
+        {
+            throw new NotSupportedException("not supported");
+        }
+
+        public virtual IEnumerator<string> GetEnumerator()// From IList<string>
+        {
+            return new TermValueListEnumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()// From IList<string>
+        {
+            return new TermValueListEnumerator(this);
+        }
+
+        public class TermValueListEnumerator : IEnumerator<string>
+        {
+            private readonly TermValueList<T> parent;
+
+            public TermValueListEnumerator(TermValueList<T> parent)
+            {
+                this.parent = parent;
+            }
+
+            public string Current
+            {
+                get { return parent.Format(parent._innerList.GetEnumerator().Current); }
+            }
+
+            public void Dispose()
+            {
+            }
+
+            object IEnumerator.Current
+            {
+                get { return parent.Format(parent._innerList.GetEnumerator().Current); }
+            }
+
+            public bool MoveNext()
+            {
+                return parent._innerList.GetEnumerator().MoveNext();
+            }
+
+            public void Reset()
+            {
+                throw new NotSupportedException("not supported");
+            }
         }
     }
 }

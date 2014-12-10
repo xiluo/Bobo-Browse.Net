@@ -4,7 +4,7 @@ namespace BoboBrowse.Net.Facets.Data
     using System.Collections.Generic;
     using System.Globalization;
 
-	public class TermShortList : TermNumberList
+	public class TermShortList : TermNumberList<short>
 	{
 		public TermShortList() 
             : base()
@@ -40,13 +40,13 @@ namespace BoboBrowse.Net.Facets.Data
 
         public override void Add(string o)
         {
-            Add(Parse(o));
+            _innerList.Add(Parse(o));
         }
 
 		public override int IndexOf(object o)
 		{
-            int val = int.Parse((string)o, CultureInfo.InvariantCulture);
-            return this.BinarySearch(val);
+            short val = short.Parse((string)o, CultureInfo.InvariantCulture);
+            return _innerList.BinarySearch(val);
 		}
 
 		protected override object ParseString(string o)

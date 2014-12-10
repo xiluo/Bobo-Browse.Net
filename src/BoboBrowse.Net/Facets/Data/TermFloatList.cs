@@ -5,7 +5,7 @@ namespace BoboBrowse.Net.Facets.Data
     using System.Collections.Generic;
     using System.Globalization;
 
-    public class TermFloatList : TermNumberList
+    public class TermFloatList : TermNumberList<float>
     {
         public TermFloatList()
             : base()
@@ -41,13 +41,13 @@ namespace BoboBrowse.Net.Facets.Data
 
         public override void Add(string @value)
         {
-            Add(Parse(@value));
+            _innerList.Add(Parse(@value));
         }
 
         public override int IndexOf(object o)
         {
             float val = float.Parse((string)o, CultureInfo.InvariantCulture);
-            return this.BinarySearch(val);
+            return _innerList.BinarySearch(val);
         }
 
         protected override object ParseString(string o)

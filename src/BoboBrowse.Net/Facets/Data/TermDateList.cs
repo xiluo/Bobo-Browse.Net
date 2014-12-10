@@ -7,7 +7,7 @@ namespace BoboBrowse.Net.Facets.Data
     using System.Globalization;
 
     ///<summary>Internal data are stored in a long[] with values generated from <seealso cref="Date#getTime()"/> </summary>
-	public class TermDateList : TermValueList<object>
+	public class TermDateList : TermValueList<long>
 	{
         public TermDateList()
         {
@@ -40,43 +40,53 @@ namespace BoboBrowse.Net.Facets.Data
         public string FormatString { get; protected set; }
         public IFormatProvider FormatProvider { get; protected set; }
 
-		private DateTime? Parse(string s)
-		{
+        private long Parse(string s)
+        {
             if (s == null || s.Length == 0)
             {
-                return null;
+                return 0L;
             }
             else
             {
-                return DateTools.StringToDate(s);
+                return DateTime.Parse(s, this.FormatProvider).ToBinary();
             }
-		}
+        }
 
 		public override void Add(string @value)
 		{
-            Add(Parse(@value));
+            _innerList.Add(Parse(@value));
 		}
 
 		public override string Format(object o)
 		{
-            if (o != null)
+            long val;
+            if (o is string)
             {
-                if (!string.IsNullOrEmpty(this.FormatString))
-                {
-                    return ((DateTime)o).ToString(this.FormatString, this.FormatProvider);
-                }
-                else
-                {
-                    return DateTools.DateToString((DateTime)o, DateTools.Resolution.MINUTE);
-                }
+                val = Parse(Convert.ToString(o));
             }
-            return null;
+            else
+            {
+                val = Convert.ToInt64(o);
+            }
+
+            if (string.IsNullOrEmpty(this.FormatString))
+            {
+                return Convert.ToString(o);
+            }
+            else
+            {
+                if (this.FormatProvider == null)
+                {
+                    return DateTime.FromBinary(val).ToString(this.FormatString);
+                }
+                return DateTime.FromBinary(val).ToString(this.FormatString, this.FormatProvider);
+            }
 		}
 
 		public override int IndexOf(object o)
 		{
-			DateTime? val = Parse((string)o);
-            return this.BinarySearch(val);
+			long val = Parse((string)o);
+            return _innerList.BinarySearch(val);
 		}
 	}
 }

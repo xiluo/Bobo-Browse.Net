@@ -11,27 +11,22 @@
             {
                 o = "";
             }
-            ((List<string>)this).Add(o);
-        }
-
-        public override List<string> GetInnerList()
-        {
-            return this;
+            _innerList.Add(o);
         }
 
         public override bool Contains(object o)
         {
-            return IndexOf((string)o) >= 0;
+            return IndexOf(o) >= 0;
         }
 
         public override string Format(object o)
         {
-            return (string)o;
+            return Convert.ToString(o);
         }
 
         public override int IndexOf(object o)
         {
-            return BinarySearch((string)o, System.StringComparer.Ordinal);
+            return _innerList.BinarySearch(Convert.ToString(o), StringComparer.Ordinal);
         }
     }
 }
