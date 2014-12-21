@@ -120,8 +120,9 @@ namespace BoboBrowse.Net
                 }
                 catch (Exception ioe)
                 {
-                    tobeRemoved.Add(name);
-                    logger.Error("facet load failed: " + name + ": " + ioe.Message, ioe);
+                    throw;
+                    //tobeRemoved.Add(name);
+                    //logger.Error("facet load failed: " + name + ": " + ioe.Message, ioe);
                 }
             }
 

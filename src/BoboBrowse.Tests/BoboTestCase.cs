@@ -1620,7 +1620,7 @@ namespace BoboBrowse.Net
         [Test]
         public void TestSimpleGroupByFacetHandler()
         {
-            BrowseRequest req = new BrowseRequest();
+            BrowseRequest req = new BrowseRequest() { Count = 10 };
             FacetSpec fspec = new FacetSpec();
             req.SetFacetSpec("groupby", fspec);
 
