@@ -64,7 +64,12 @@ namespace BoboBrowse.Net.Facets.Data
             }
             else
             {
-                return (ITermValueList)Activator.CreateInstance(listType, this.formatString, this.formatProvider);
+                var constr = listType.GetConstructor(new Type[] { typeof(string), typeof(IFormatProvider) });
+                if (constr == null)
+                {
+                    throw new InvalidOperationException("The ITermValueList construct has invalid.");
+                }
+                return (ITermValueList)constr.Invoke(new object[] { this.formatString, this.formatProvider });
             }
         }
     }
